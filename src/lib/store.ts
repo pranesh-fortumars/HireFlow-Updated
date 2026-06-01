@@ -57,6 +57,9 @@ const INITIAL_APPLICATIONS: Application[] = [
   }
 ];
 
+// Set this to false when you are ready to use real Firestore data
+const MOCK_MODE = true;
+
 export function useHireFlowStore() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [interviewers, setInterviewers] = useState<User[]>([]);
@@ -66,34 +69,70 @@ export function useHireFlowStore() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const unsubApps = onSnapshot(query(candidatesCollection, orderBy('createdAt', 'desc')), (snapshot) => {
-      const appsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Application));
-      if (appsData.length === 0) {
-        setApplications(INITIAL_APPLICATIONS);
-      } else {
-        setApplications(appsData);
-      }
-    });
+    if (MOCK_MODE) {
+      setApplications(INITIAL_APPLICATIONS);
+      setAllUsers(INITIAL_INTERVIEWERS);
+      setInterviewers(INITIAL_INTERVIEWERS);
+      setNotifications([]);
+      setAuditLogs([]);
+      setIsInitialized(true);
+      return;
+    }
 
-    const unsubUsers = onSnapshot(usersCollection, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
-      if (usersData.length === 0) {
+    const unsubApps = onSnapshot(query(candidatesCollection, orderBy('createdAt', 'desc')), 
+      (snapshot) => {
+        const appsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Application));
+        if (appsData.length === 0) {
+          setApplications(INITIAL_APPLICATIONS);
+        } else {
+          setApplications(appsData);
+        }
+      },
+      (error) => {
+        console.warn("Firestore access denied for Candidates. Falling back to mock data. Please update Firebase Security Rules to test mode.");
+        setApplications(INITIAL_APPLICATIONS);
+      }
+    );
+
+    const unsubUsers = onSnapshot(usersCollection, 
+      (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+        if (usersData.length === 0) {
+          setAllUsers(INITIAL_INTERVIEWERS);
+          setInterviewers(INITIAL_INTERVIEWERS);
+        } else {
+          setAllUsers(usersData);
+          setInterviewers(usersData.filter(u => u.role === 'INTERVIEWER'));
+        }
+      },
+      (error) => {
+        console.warn("Firestore access denied for Users. Falling back to mock data.");
         setAllUsers(INITIAL_INTERVIEWERS);
         setInterviewers(INITIAL_INTERVIEWERS);
-      } else {
-        setAllUsers(usersData);
-        setInterviewers(usersData.filter(u => u.role === 'INTERVIEWER'));
       }
-    });
+    );
 
-    const unsubNotifs = onSnapshot(query(notificationsCollection, orderBy('timestamp', 'desc')), (snapshot) => {
-      setNotifications(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as NotificationMsg)));
-    });
+    const unsubNotifs = onSnapshot(query(notificationsCollection, orderBy('timestamp', 'desc')), 
+      (snapshot) => {
+        setNotifications(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as NotificationMsg)));
+      },
+      (error) => {
+        console.warn("Firestore access denied for Notifications.");
+        setNotifications([]);
+      }
+    );
 
-    const unsubAudit = onSnapshot(query(auditLogsCollection, orderBy('date', 'desc'), orderBy('time', 'desc')), (snapshot) => {
-      setAuditLogs(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditLog)));
-      setIsInitialized(true);
-    });
+    const unsubAudit = onSnapshot(query(auditLogsCollection, orderBy('date', 'desc'), orderBy('time', 'desc')), 
+      (snapshot) => {
+        setAuditLogs(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AuditLog)));
+        setIsInitialized(true);
+      },
+      (error) => {
+        console.warn("Firestore access denied for Audit Logs.");
+        setAuditLogs([]);
+        setIsInitialized(true);
+      }
+    );
 
     return () => {
       unsubApps();
