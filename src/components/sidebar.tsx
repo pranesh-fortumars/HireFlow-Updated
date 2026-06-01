@@ -18,14 +18,23 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed?: (v: boolean) => void }) => {
+export const Sidebar = ({ 
+  isCollapsed, 
+  setIsCollapsed,
+  setIsMobileOpen
+}: { 
+  isCollapsed: boolean, 
+  setIsCollapsed?: (v: boolean) => void,
+  setIsMobileOpen?: (v: boolean) => void
+}) => {
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'HR', 'INTERVIEWER'] },
-    { label: 'Applicants', href: '/dashboard/applications', icon: Users, roles: ['ADMIN', 'HR'] },
-    { label: 'My Interviews', href: '/dashboard/my-interviews', icon: ClipboardList, roles: ['INTERVIEWER'] },
+    { label: 'Applicants Pipeline', href: '/dashboard/applications', icon: Users, roles: ['ADMIN', 'HR'] },
+    { label: 'Candidate Tracking', href: '/dashboard/candidates', icon: ClipboardList, roles: ['ADMIN', 'HR'] },
+    { label: 'My Interviews', href: '/dashboard/my-interviews', icon: Calendar, roles: ['INTERVIEWER'] },
     { label: 'Add Candidate', href: '/dashboard/applications/new', icon: UserPlus, roles: ['HR'] },
     { label: 'Draft Candidates', href: '/dashboard/drafts', icon: FileEdit, roles: ['HR'] },
     { label: 'Analytics', href: '/dashboard/analytics', icon: PieChart, roles: ['ADMIN'] },
@@ -37,12 +46,10 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean,
 
   return (
     <motion.div 
-      className="flex flex-col h-screen border-r border-white/10 bg-[#0B0C14]/90 backdrop-blur-2xl fixed left-0 top-0 z-40 overflow-hidden"
+      className="flex flex-col h-full md:h-screen md:border-r border-white/10 bg-[#0B0C14]/90 backdrop-blur-2xl md:fixed left-0 top-0 z-40 overflow-hidden w-full"
       initial={false}
       animate={{ width: isCollapsed ? 72 : 260 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      onMouseEnter={() => isCollapsed && window.innerWidth > 1024 && setIsCollapsed && setIsCollapsed(false)}
-      onMouseLeave={() => !isCollapsed && window.innerWidth > 1024 && setIsCollapsed && setIsCollapsed(true)}
     >
       <div className="h-16 flex items-center px-4 shrink-0 border-b border-white/5">
         <motion.div 
@@ -67,7 +74,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean,
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             
             const navLink = (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen && setIsMobileOpen(false)}>
                 <div className={cn(
                   "flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
                   isActive 
