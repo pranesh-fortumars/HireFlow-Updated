@@ -10,11 +10,13 @@ export interface User {
 }
 
 export type ApplicationStatus = 
-  | 'Pending' | 'Scheduled' | 'Appeared' | 'Cancelled' | 'No Response'
+  | 'Draft' | 'Applied' | 'Sourced' | 'Screening' | 'Scheduled' 
+  | 'Round 1 Interview' | 'Round 2 Interview' | 'HR Discussion' 
+  | 'Document Verification' | 'Background Verification' 
+  | 'Offer Released' | 'Joined' | 'Rejected' | 'Hold'
+  | 'Pending' | 'Appeared' | 'Cancelled' | 'No Response'
   | 'Attended 1st Round' | 'Selected 1st Round' | 'Rejected 1st Round' | 'Waiting For 1st Round Result'
   | 'Scheduled 2nd Round' | 'Attended 2nd Round' | 'Selected 2nd Round' | 'Rejected 2nd Round' | 'Waiting For 2nd Round Result'
-  | 'HR Discussion' | 'Document Verification' | 'Background Verification'
-  | 'Offer Released' | 'Joined' | 'Rejected' | 'Hold'
   | 'PENDING' | 'SCHEDULED' | 'COMPLETED' | 'SELECTED' | 'REJECTED' | 'HOLD'; // keeping legacy ones for safety
 
 export type VerificationStatus = 'Pending' | 'Verified' | 'Rejected';

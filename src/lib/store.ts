@@ -23,12 +23,14 @@ const INITIAL_APPLICATIONS: Application[] = [
     skills: ['React', 'Next.js', 'TypeScript'],
     resumeUrl: 'https://example.com/resume1.pdf',
     notes: 'Strong portfolio in SaaS.',
-    status: 'Scheduled',
+    status: 'Round 1 Interview',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     assignedInterviewerId: '1',
     interviewDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     interviewTime: '10:00',
-    interviewMode: 'ONLINE'
+    interviewMode: 'ONLINE',
+    noticePeriodType: '2 Months',
+    source: 'LinkedIn'
   },
   {
     id: 'app-2',
@@ -40,12 +42,14 @@ const INITIAL_APPLICATIONS: Application[] = [
     skills: ['Figma', 'UI/UX', 'Design Systems'],
     resumeUrl: 'https://example.com/resume2.pdf',
     notes: 'Ex-Google designer.',
-    status: 'COMPLETED',
+    status: 'HR Discussion',
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
     assignedInterviewerId: '2',
     interviewDate: new Date(Date.now() - 86400000).toISOString().split('T')[0],
     interviewTime: '14:30',
     interviewMode: 'ONLINE',
+    noticePeriodType: 'Immediate Joiner',
+    source: 'Referral',
     feedback: {
       technicalRating: 9,
       communicationRating: 8,
@@ -54,6 +58,36 @@ const INITIAL_APPLICATIONS: Application[] = [
       comments: 'Excellent visual skills and great personality.',
       submittedAt: new Date(Date.now() - 86400000).toISOString()
     }
+  },
+  {
+    id: 'app-3',
+    candidateName: 'Sarah Jenkins',
+    email: 'sarah.j@example.com',
+    phone: '555-0103',
+    position: 'DevOps Engineer',
+    experience: '5 years',
+    skills: ['AWS', 'Docker', 'Kubernetes'],
+    resumeUrl: 'https://example.com/resume3.pdf',
+    notes: 'Great infrastructure background.',
+    status: 'Offer Released',
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    noticePeriodType: '1 Month',
+    source: 'AngelList'
+  },
+  {
+    id: 'app-4',
+    candidateName: 'Michael Chen',
+    email: 'michael.c@example.com',
+    phone: '555-0104',
+    position: 'Full Stack Developer',
+    experience: '2 years',
+    skills: ['Vue.js', 'Node.js', 'PostgreSQL'],
+    resumeUrl: 'https://example.com/resume4.pdf',
+    notes: 'Promising junior candidate.',
+    status: 'Sourced',
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    noticePeriodType: '15 Days',
+    source: 'Direct Application'
   }
 ];
 
