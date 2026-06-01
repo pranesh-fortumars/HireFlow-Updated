@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -17,8 +17,14 @@ const firebaseConfig = {
 // Initialize Firebase (checking if it already exists for Next.js SSR)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore, Auth, and Storage
-const db = getFirestore(app);
+// Initialize Firestore, Auth, and Storage with Long Polling fallback for WebChannel bugs
+const db = (() => {
+  try {
+    return initializeFirestore(app, { experimentalForceLongPolling: true });
+  } catch (e) {
+    return getFirestore(app);
+  }
+})();
 const auth = getAuth(app);
 const storage = getStorage(app);
 
