@@ -84,6 +84,9 @@ export default function NewApplicationPage() {
       const draft = draftCandidates.find(d => d.draftId === draftIdParam);
       if (draft) {
         const loadedData = { ...formData, ...draft };
+        if (Array.isArray(loadedData.skills)) {
+          loadedData.skills = loadedData.skills.join(', ');
+        }
         setFormData(loadedData as any);
         setLastSaved(draft.lastSaved || null);
       }
@@ -114,7 +117,7 @@ export default function NewApplicationPage() {
       
       const draft = {
         ...data,
-        skills: data.skills.split(',').map(s => s.trim()).filter(s => s !== ''),
+        skills: typeof data.skills === 'string' ? data.skills.split(',').map((s: string) => s.trim()).filter((s: string) => s !== '') : (data.skills || []),
         noticePeriodValue: data.noticePeriodValue ? parseInt(data.noticePeriodValue) : undefined,
         noticePeriodUnit: unit as any,
         draftId: currentDraftId,
