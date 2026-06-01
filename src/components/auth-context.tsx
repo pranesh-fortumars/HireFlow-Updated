@@ -89,12 +89,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Basic route protection
+  // Basic route protection & RBAC
   useEffect(() => {
     if (!isLoading) {
       const publicPaths = ['/login'];
+      
+      // 1. Not logged in
       if (!user && !publicPaths.includes(pathname)) {
         router.push('/login');
+        return;
+      }
+      
+      if (user) {
+        // 2. Prevent Interviewers from accessing HR/Admin areas
+        if (user.role === 'INTERVIEWER') {
+          const restrictedPaths = ['/dashboard/applications', '/dashboard/drafts', '/dashboard/users', '/dashboard/audit', '/dashboard/analytics', '/dashboard/settings'];
+          if (restrictedPaths.some(p => pathname.startsWith(p))) {
+            router.push('/dashboard/my-interviews');
+          }
+        }
+        
+        // 3. Prevent HR from accessing Admin areas
+        if (user.role === 'HR') {
+          const restrictedPaths = ['/dashboard/users', '/dashboard/audit', '/dashboard/analytics', '/dashboard/settings'];
+          if (restrictedPaths.some(p => pathname.startsWith(p))) {
+            router.push('/dashboard');
+          }
+        }
       }
     }
   }, [user, isLoading, pathname, router]);

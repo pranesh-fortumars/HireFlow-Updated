@@ -164,6 +164,10 @@ export function useHireFlowStore() {
   }, []);
 
   const addAuditLog = async (log: Omit<AuditLog, 'id'>) => {
+    if (MOCK_MODE) {
+      setAuditLogs(prev => [{ ...log, id: `audit-${Date.now()}` }, ...prev]);
+      return;
+    }
     const newDocRef = doc(auditLogsCollection);
     await setDoc(newDocRef, { ...log, id: newDocRef.id });
   };
@@ -204,11 +208,19 @@ export function useHireFlowStore() {
   };
 
   const addNotification = async (notif: Omit<NotificationMsg, 'id' | 'read'>) => {
+    if (MOCK_MODE) {
+      setNotifications(prev => [{ ...notif, read: false, id: `notif-${Date.now()}` }, ...prev]);
+      return;
+    }
     const newDocRef = doc(notificationsCollection);
     await setDoc(newDocRef, { ...notif, read: false, id: newDocRef.id });
   };
 
   const markNotificationRead = async (id: string) => {
+    if (MOCK_MODE) {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      return;
+    }
     await updateDoc(doc(notificationsCollection, id), { read: true });
   };
 
@@ -233,8 +245,12 @@ export function useHireFlowStore() {
           ...app,
           referenceNumber,
           createdAt: new Date().toISOString(),
-          status: 'Pending',
         };
+
+        if (MOCK_MODE) {
+          setApplications(prev => [{...newApp as Application, id: newAppId}, ...prev]);
+          return;
+        }
 
         transaction.set(counterRef, { count: nextValue });
         transaction.set(newDocRef, newApp);
@@ -260,8 +276,12 @@ export function useHireFlowStore() {
 
   const updateApplication = async (id: string, updates: Partial<Application>, currentUser?: User) => {
     try {
-      const docRef = doc(candidatesCollection, id);
-      await updateDoc(docRef, updates);
+      if (MOCK_MODE) {
+        setApplications(prev => prev.map(app => app.id === id ? { ...app, ...updates } : app));
+      } else {
+        const docRef = doc(candidatesCollection, id);
+        await updateDoc(docRef, updates);
+      }
 
       if (currentUser && updates.status) {
         await addAuditLog({
@@ -280,8 +300,12 @@ export function useHireFlowStore() {
 
   const deleteApplication = async (id: string, currentUser?: User) => {
     try {
-      const docRef = doc(candidatesCollection, id);
-      await deleteDoc(docRef);
+      if (MOCK_MODE) {
+        setApplications(prev => prev.filter(app => app.id !== id));
+      } else {
+        const docRef = doc(candidatesCollection, id);
+        await deleteDoc(docRef);
+      }
 
       if (currentUser) {
         await addAuditLog({
