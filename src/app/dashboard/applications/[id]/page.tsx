@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { VerificationStatus, ApplicationStatus } from '@/lib/types';
+import { VerificationStatus, ApplicationStatus, DocumentVerification } from '@/lib/types';
 
 export default function ApplicationDetailPage() {
   const { id } = useParams();
@@ -316,17 +316,17 @@ export default function ApplicationDetailPage() {
                     <div>
                       <p className="font-medium">{v.label}</p>
                       <div className="flex items-center gap-1 mt-1 text-xs">
-                        {verification[v.key as keyof VerificationStatus] === 'Verified' ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : 
-                         verification[v.key as keyof VerificationStatus] === 'Rejected' ? <XCircle className="w-3 h-3 text-rose-400" /> : 
+                        {verification[v.key as keyof DocumentVerification] === 'Verified' ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : 
+                         verification[v.key as keyof DocumentVerification] === 'Rejected' ? <XCircle className="w-3 h-3 text-rose-400" /> : 
                          <HelpCircle className="w-3 h-3 text-amber-400" />}
                         <span className={
-                          verification[v.key as keyof VerificationStatus] === 'Verified' ? 'text-emerald-400' :
-                          verification[v.key as keyof VerificationStatus] === 'Rejected' ? 'text-rose-400' : 'text-amber-400'
-                        }>{verification[v.key as keyof VerificationStatus]}</span>
+                          verification[v.key as keyof DocumentVerification] === 'Verified' ? 'text-emerald-400' :
+                          verification[v.key as keyof DocumentVerification] === 'Rejected' ? 'text-rose-400' : 'text-amber-400'
+                        }>{verification[v.key as keyof DocumentVerification]}</span>
                       </div>
                     </div>
                     {(isHR || isAdmin) && (
-                      <Select value={verification[v.key as keyof VerificationStatus]} onValueChange={(val: VerificationStatus) => handleVerifyDoc(v.key, val)}>
+                      <Select value={verification[v.key as keyof DocumentVerification]} onValueChange={(val: VerificationStatus) => handleVerifyDoc(v.key, val)}>
                         <SelectTrigger className="w-[120px] h-8 bg-transparent border-white/10 text-xs">
                           <SelectValue />
                         </SelectTrigger>

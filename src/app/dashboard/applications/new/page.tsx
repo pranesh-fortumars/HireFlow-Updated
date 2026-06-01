@@ -114,6 +114,7 @@ export default function NewApplicationPage() {
       
       const draft = {
         ...data,
+        skills: data.skills.split(',').map(s => s.trim()).filter(s => s !== ''),
         noticePeriodValue: data.noticePeriodValue ? parseInt(data.noticePeriodValue) : undefined,
         noticePeriodUnit: unit as any,
         draftId: currentDraftId,
