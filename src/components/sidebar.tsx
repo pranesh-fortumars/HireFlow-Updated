@@ -15,7 +15,8 @@ import {
   UserPlus,
   PieChart,
   ClipboardList,
-  ShieldAlert
+  ShieldAlert,
+  FileEdit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -47,6 +48,12 @@ export const Sidebar = () => {
       label: 'Add Candidate', 
       href: '/dashboard/applications/new', 
       icon: UserPlus,
+      roles: ['HR']
+    },
+    { 
+      label: 'Draft Candidates', 
+      href: '/dashboard/drafts', 
+      icon: FileEdit,
       roles: ['HR']
     },
     { 

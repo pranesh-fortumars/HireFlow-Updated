@@ -113,6 +113,7 @@ export default function ApplicationDetailPage() {
   ];
 
   const verification = app.verification || { aadhar: 'Pending', education: 'Pending', employment: 'Pending', identity: 'Pending' };
+  const isImmediate = app.noticePeriodType === 'Immediate Joiner' || app.noticePeriodType === 'No Notice Period Applicable';
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
@@ -123,8 +124,15 @@ export default function ApplicationDetailPage() {
             <ArrowLeft className="w-6 h-6" />
           </Button>
           <div>
-            <h2 className="text-3xl font-headline font-bold">{app.candidateName}</h2>
-            <p className="text-muted-foreground font-mono">{app.referenceNumber || app.id}</p>
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-headline font-bold">{app.candidateName}</h2>
+              {isImmediate && (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                  Immediate Joiner
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground font-mono mt-1">{app.referenceNumber || app.id}</p>
           </div>
         </div>
         
@@ -215,7 +223,15 @@ export default function ApplicationDetailPage() {
                     <p className="text-xs text-muted-foreground mb-1">Expected CTC</p>
                     <p className="font-medium text-emerald-400">{app.expectedCTC || 'Not provided'}</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-white/5 col-span-2">
+                  <div className="p-4 rounded-xl bg-white/5">
+                    <p className="text-xs text-muted-foreground mb-1">Notice Period</p>
+                    <p className="font-medium">
+                      {(app.noticePeriodType === 'Custom Days' || app.noticePeriodType === 'Custom Months') 
+                        ? `${app.noticePeriodValue} ${app.noticePeriodUnit}` 
+                        : (app.noticePeriodType || app.noticePeriod || 'Not provided')}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/5">
                     <p className="text-xs text-muted-foreground mb-1">Source</p>
                     <p className="font-medium">{app.source || 'Direct'} {app.sourceDetails ? `- ${app.sourceDetails}` : ''}</p>
                   </div>

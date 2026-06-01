@@ -8,7 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend
 } from 'recharts';
 import { 
-  Users, CheckCircle, XCircle, Clock, TrendingUp, Target, Activity
+  Users, CheckCircle, XCircle, Clock, TrendingUp, Target, Activity, CalendarClock, Zap
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -50,6 +50,47 @@ export default function AnalyticsPage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([name, apps]) => ({ name, apps }));
+
+  // Notice Period Analytics
+  let immediateCount = 0;
+  let totalNoticeDays = 0;
+  let noticeDaysCount = 0;
+
+  const noticePeriodBreakdown: Record<string, number> = {
+    'Immediate': 0,
+    '<= 30 Days': 0,
+    '31-60 Days': 0,
+    '> 60 Days': 0,
+  };
+
+  applications.forEach(app => {
+    let days = 0;
+    if (app.noticePeriodType === 'Immediate Joiner' || app.noticePeriodType === 'No Notice Period Applicable') {
+      immediateCount++;
+      noticePeriodBreakdown['Immediate']++;
+    } else if (app.noticePeriodType === '15 Days') days = 15;
+    else if (app.noticePeriodType === '30 Days') days = 30;
+    else if (app.noticePeriodType === '45 Days') days = 45;
+    else if (app.noticePeriodType === '60 Days') days = 60;
+    else if (app.noticePeriodType === '90 Days') days = 90;
+    else if (app.noticePeriodType === 'Custom Days' && app.noticePeriodValue) days = app.noticePeriodValue;
+    else if (app.noticePeriodType === 'Custom Months' && app.noticePeriodValue) days = app.noticePeriodValue * 30;
+    
+    if (days > 0) {
+      totalNoticeDays += days;
+      noticeDaysCount++;
+      
+      if (days <= 30) noticePeriodBreakdown['<= 30 Days']++;
+      else if (days <= 60) noticePeriodBreakdown['31-60 Days']++;
+      else noticePeriodBreakdown['> 60 Days']++;
+    }
+  });
+
+  const avgNoticePeriod = noticeDaysCount > 0 ? Math.round(totalNoticeDays / noticeDaysCount) : 0;
+  const colorsArray = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+  const noticePeriodPieData = Object.entries(noticePeriodBreakdown)
+    .map(([name, value], index) => ({ name, value, color: colorsArray[index % colorsArray.length] }))
+    .filter(d => d.value > 0);
 
   return (
     <div className="space-y-8 pb-10">
@@ -167,6 +208,50 @@ export default function AnalyticsPage() {
               </div>
             ))}
             {departmentData.length === 0 && <p className="text-muted-foreground text-center">No applications yet.</p>}
+          </div>
+        </GlassCard>
+
+
+        <GlassCard noHover>
+          <h3 className="text-xl font-headline font-semibold mb-6 flex items-center gap-2">
+            <CalendarClock className="w-5 h-5 text-cyan-400" /> Notice Period Analytics
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center">
+              <Zap className="w-8 h-8 text-emerald-400 mb-2" />
+              <h4 className="text-2xl font-bold font-headline">{immediateCount}</h4>
+              <p className="text-sm text-muted-foreground">Immediate Joiners</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center text-center">
+              <Clock className="w-8 h-8 text-indigo-400 mb-2" />
+              <h4 className="text-2xl font-bold font-headline">{avgNoticePeriod} <span className="text-base text-muted-foreground">days</span></h4>
+              <p className="text-sm text-muted-foreground">Avg Notice Period</p>
+            </div>
+          </div>
+          
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={noticePeriodPieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {noticePeriodPieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e1b4b', border: '1px solid #312e81', borderRadius: '8px' }}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </GlassCard>
 

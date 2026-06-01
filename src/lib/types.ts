@@ -52,7 +52,10 @@ export interface Application {
   experience: string;
   currentCTC?: string;
   expectedCTC?: string;
-  noticePeriod?: string;
+  noticePeriod?: string; // Legacy field
+  noticePeriodType?: string; // Immediate Joiner, 15 Days, Custom Days, etc.
+  noticePeriodValue?: number; // e.g., 45
+  noticePeriodUnit?: 'Days' | 'Months';
   currentEmployer?: string;
   source?: string;
   sourceDetails?: string;
@@ -85,6 +88,12 @@ export interface Application {
   feedback?: InterviewFeedback;
   verification?: DocumentVerification;
 }
+
+export type DraftCandidate = Partial<Application> & {
+  draftId: string;
+  createdBy: string; // HR User ID
+  lastSaved: string; // ISO string
+};
 
 export interface InterviewFeedback {
   technicalRating: number;

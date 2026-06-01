@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Application, User } from './types';
+import { Application, User, DraftCandidate } from './types';
 import { db } from './firebase';
-import { notificationsCollection, auditLogsCollection, candidatesCollection, usersCollection, getCounterDoc } from './firestore-schema';
+import { notificationsCollection, auditLogsCollection, candidatesCollection, usersCollection, draftCandidatesCollection, getCounterDoc } from './firestore-schema';
 import { NotificationMsg, AuditLog } from './types';
-import { onSnapshot, setDoc, doc, updateDoc, deleteDoc, runTransaction, query, orderBy } from 'firebase/firestore';
+import { onSnapshot, setDoc, doc, updateDoc, deleteDoc, runTransaction, query, orderBy, where } from 'firebase/firestore';
 const INITIAL_INTERVIEWERS: User[] = [
   { id: '1', name: 'John Smith', email: 'interviewer@company.com', role: 'INTERVIEWER' },
   { id: '2', name: 'Sarah Johnson', email: 'sarah@company.com', role: 'INTERVIEWER' },
@@ -66,7 +66,9 @@ export function useHireFlowStore() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<NotificationMsg[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [draftCandidates, setDraftCandidates] = useState<DraftCandidate[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isDraftsInitialized, setIsDraftsInitialized] = useState(false);
 
   useEffect(() => {
     if (MOCK_MODE) {
@@ -76,6 +78,12 @@ export function useHireFlowStore() {
       setNotifications([]);
       setAuditLogs([]);
       setIsInitialized(true);
+      
+      const localDrafts = localStorage.getItem('hireflow_drafts');
+      if (localDrafts) {
+        setDraftCandidates(JSON.parse(localDrafts));
+      }
+      setIsDraftsInitialized(true);
       return;
     }
 
@@ -134,17 +142,65 @@ export function useHireFlowStore() {
       }
     );
 
+    const unsubDrafts = onSnapshot(query(draftCandidatesCollection, orderBy('lastSaved', 'desc')), 
+      (snapshot) => {
+        setDraftCandidates(snapshot.docs.map(doc => ({ ...doc.data(), draftId: doc.id } as DraftCandidate)));
+        setIsDraftsInitialized(true);
+      },
+      (error) => {
+        console.warn("Firestore access denied for Drafts.");
+        setDraftCandidates([]);
+        setIsDraftsInitialized(true);
+      }
+    );
+
     return () => {
       unsubApps();
       unsubUsers();
       unsubNotifs();
       unsubAudit();
+      unsubDrafts();
     };
   }, []);
 
   const addAuditLog = async (log: Omit<AuditLog, 'id'>) => {
     const newDocRef = doc(auditLogsCollection);
     await setDoc(newDocRef, { ...log, id: newDocRef.id });
+  };
+
+  const saveDraft = async (draft: DraftCandidate) => {
+    if (MOCK_MODE) {
+      setDraftCandidates(prev => {
+        const existing = prev.find(d => d.draftId === draft.draftId);
+        let updated;
+        if (existing) {
+          updated = prev.map(d => d.draftId === draft.draftId ? draft : d);
+        } else {
+          updated = [draft, ...prev];
+        }
+        localStorage.setItem('hireflow_drafts', JSON.stringify(updated));
+        return updated;
+      });
+      return draft.draftId;
+    }
+    
+    const draftRef = doc(draftCandidatesCollection, draft.draftId);
+    await setDoc(draftRef, draft);
+    return draft.draftId;
+  };
+
+  const deleteDraft = async (draftId: string) => {
+    if (MOCK_MODE) {
+      setDraftCandidates(prev => {
+        const updated = prev.filter(d => d.draftId !== draftId);
+        localStorage.setItem('hireflow_drafts', JSON.stringify(updated));
+        return updated;
+      });
+      return;
+    }
+
+    const draftRef = doc(draftCandidatesCollection, draftId);
+    await deleteDoc(draftRef);
   };
 
   const addNotification = async (notif: Omit<NotificationMsg, 'id' | 'read'>) => {
@@ -270,6 +326,7 @@ export function useHireFlowStore() {
     allUsers,
     notifications,
     auditLogs,
+    draftCandidates,
     addApplication,
     updateApplication,
     deleteApplication,
@@ -277,6 +334,9 @@ export function useHireFlowStore() {
     submitFeedback,
     addNotification,
     markNotificationRead,
-    isInitialized
+    saveDraft,
+    deleteDraft,
+    isInitialized,
+    isDraftsInitialized
   };
 }

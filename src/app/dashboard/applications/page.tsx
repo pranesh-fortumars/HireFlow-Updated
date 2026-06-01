@@ -37,7 +37,8 @@ export default function ApplicationsPage() {
 
   const filteredApps = applications.filter(app => 
     app.candidateName.toLowerCase().includes(search.toLowerCase()) ||
-    app.position.toLowerCase().includes(search.toLowerCase())
+    app.position.toLowerCase().includes(search.toLowerCase()) ||
+    app.noticePeriodType?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -61,7 +62,7 @@ export default function ApplicationsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by name, position..." 
+              placeholder="Search by name, position, notice period..." 
               className="pl-10 bg-white/5 border-white/10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -74,7 +75,9 @@ export default function ApplicationsPage() {
       </GlassCard>
 
       <div className="grid grid-cols-1 gap-4">
-        {filteredApps.map((app) => (
+        {filteredApps.map((app) => {
+          const isImmediate = app.noticePeriodType === 'Immediate Joiner' || app.noticePeriodType === 'No Notice Period Applicable';
+          return (
           <GlassCard key={app.id} className="p-0 overflow-hidden hover:bg-white/[0.07]" noHover>
             <div className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
@@ -82,8 +85,15 @@ export default function ApplicationsPage() {
                   {app.candidateName.charAt(0)}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg">{app.candidateName}</h4>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-lg">{app.candidateName}</h4>
+                    {isImmediate && (
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        High Priority: Available Now
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {app.email}</span>
                     <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> {app.position}</span>
                   </div>
@@ -142,7 +152,8 @@ export default function ApplicationsPage() {
               </div>
             </div>
           </GlassCard>
-        ))}
+          );
+        })}
 
         {filteredApps.length === 0 && (
           <div className="text-center py-20">
