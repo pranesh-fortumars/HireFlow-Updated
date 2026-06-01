@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useHireFlowStore } from '@/lib/store';
 import { useAuth } from '@/components/auth-context';
@@ -17,11 +17,11 @@ import { useToast } from '@/hooks/use-toast';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-export default function NewApplicationPage() {
+function NewApplicationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const draftIdParam = searchParams.get('draftId');
-  const { addApplication, saveDraft, deleteDraft, draftCandidates, isDraftsInitialized } = useHireFlowStore();
+  const { addApplication, updateApplication, saveDraft, deleteDraft, draftCandidates, isDraftsInitialized } = useHireFlowStore();
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -178,35 +178,58 @@ export default function NewApplicationPage() {
 
     setIsSubmitting(true);
     try {
-      // Handle file uploads first
-      const timestamp = Date.now();
-      const docs: any = {};
-      
-      const uploadPromises = Object.entries(files).map(async ([key, file]) => {
-        if (file) {
-          const url = await uploadFile(file, `candidates/${timestamp}/${key}_${file.name}`);
-          docs[`${key}Url`] = url;
-        }
-      });
-      await Promise.all(uploadPromises);
-
-      // Create Candidate
+      // 1. Create Candidate FIRST to get the Firestore ID
       const unit = ['Custom Months'].includes(formData.noticePeriodType) ? 'Months' : 'Days';
       
-      await addApplication({
+      const newAppId = await addApplication({
         ...formData,
         noticePeriodValue: formData.noticePeriodValue ? parseInt(formData.noticePeriodValue) : undefined,
         noticePeriodUnit: unit as any,
-        skills: formData.skills.split(',').map(s => s.trim()).filter(s => s !== ''),
-        documents: docs,
-        resumeUrl: docs.resumeUrl || '',
+        skills: typeof formData.skills === 'string' ? formData.skills.split(',').map(s => s.trim()).filter(s => s !== '') : (formData.skills || []),
+        resumeUrl: '',
       });
 
+      // Delete the draft if we successfully created the candidate
       if (draftId) {
         await deleteDraft(draftId);
       }
 
-      toast({ title: "Success", description: "Candidate created successfully." });
+      // 2. Try to handle file uploads using the Firestore ID
+      let hasUploadErrors = false;
+      const docs: any = {};
+      
+      try {
+        const uploadPromises = Object.entries(files).map(async ([key, file]) => {
+          if (file) {
+            // Upload to candidates/{newAppId}/
+            const url = await uploadFile(file, `candidates/${newAppId}/${key}_${file.name}`);
+            docs[`${key}Url`] = url;
+          }
+        });
+        await Promise.all(uploadPromises);
+
+        // 3. Update Candidate with file URLs if successful
+        if (Object.keys(docs).length > 0) {
+          await updateApplication(newAppId, { 
+            documents: docs,
+            resumeUrl: docs.resumeUrl || '',
+          });
+        }
+      } catch (uploadError) {
+        console.error("File upload failed (possibly CORS):", uploadError);
+        hasUploadErrors = true;
+      }
+
+      if (hasUploadErrors) {
+        toast({ 
+          title: "Candidate Saved (Partial)", 
+          description: "Data was saved, but file uploads failed (CORS policy or network error).", 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ title: "Success", description: "Candidate created successfully with files." });
+      }
+
       router.push('/dashboard/applications');
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -466,5 +489,13 @@ export default function NewApplicationPage() {
         </GlassCard>
       </form>
     </div>
+  );
+}
+
+export default function NewApplicationPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center p-12 text-white">Loading candidate form...</div>}>
+      <NewApplicationForm />
+    </Suspense>
   );
 }
