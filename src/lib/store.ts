@@ -58,7 +58,7 @@ const INITIAL_APPLICATIONS: Application[] = [
 ];
 
 // Set this to false when you are ready to use real Firestore data
-const MOCK_MODE = false;
+const MOCK_MODE = true;
 
 export function useHireFlowStore() {
   const [applications, setApplications] = useState<Application[]>([]);
